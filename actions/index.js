@@ -1,0 +1,2 @@
+require("./mainCommands");
+require("./shablons");
