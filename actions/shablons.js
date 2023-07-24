@@ -5,6 +5,8 @@ const { messages } = require("../lib/messages");
 
 const composer = new Composer();
 
-composer.hears("➕Shablon yaratish", (ctx) => {});
+composer.hears("➕Shablon yaratish", (ctx) =>
+  ctx.scene.enter("CREATE_SHABLON")
+);
 
 bot.use(composer);

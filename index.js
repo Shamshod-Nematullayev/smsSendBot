@@ -4,3 +4,5 @@ require("dotenv").config();
 
 // connect db
 connectDB();
+require("./middleware/useScenes");
+require("./actions");
