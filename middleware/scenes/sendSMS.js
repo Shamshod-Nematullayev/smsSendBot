@@ -7,6 +7,7 @@ const { toExcel } = require("to-excel");
 const excelToJson = require("convert-excel-to-json");
 const https = require("https");
 const { bot } = require("../../core/bot");
+const fs = require("fs");
 
 const sendSMS = new Scenes.WizardScene(
   "SENDING_SMS",
@@ -31,7 +32,7 @@ const sendSMS = new Scenes.WizardScene(
               }
             });
             let xlsxContent = toExcel.exportXLS(headers, data, "input");
-            await require("fs").writeFileSync("input.xls", xlsxContent);
+            await fs.writeFileSync("input.xls", xlsxContent);
             ctx.replyWithDocument(
               { source: "input.xls" },
               {
@@ -47,12 +48,12 @@ const sendSMS = new Scenes.WizardScene(
       }
 
       // ------------- SHablonlardan biri tanlanayotganida
-      const shablons = await Shablon.find();
-      let found = false;
-      let template;
       if (isExit(ctx)) {
         return ctx.scene.leave();
       }
+      const shablons = await Shablon.find();
+      let found = false;
+      let template;
       shablons.forEach((shablon) => {
         if (ctx.message.text == shablon.name) {
           found = true;
@@ -80,13 +81,32 @@ const sendSMS = new Scenes.WizardScene(
   async (ctx) => {
     // ---------------- EXCEL file qabul qilinayotgan payt
     try {
-      if (ctx.message.document.mime_type === "application/vnd.ms-excel") {
+      // chiqish tugmasi tekshiruvi
+      if (ctx.message && isExit(ctx)) {
+        return ctx.scene.leave();
+      }
+      // tasdiqlash tugmasi tekshiruvi
+      if (
+        ctx.update &&
+        ctx.update.callback_query &&
+        ctx.update.callback_query.data == "confirm"
+      ) {
+        // smslarni yuborish uchun jo'natish funksiyasi yoziladigan joy
+        // jo'natib bo'lgandan keyin ko'rinadigan xabar
+        return ctx.editMessageCaption(`Xabarlar yuborildi`);
+      }
+      // excel file tekshiruvi
+      if (
+        ctx.message.document &&
+        ctx.message.document.mime_type === "application/vnd.ms-excel"
+      ) {
+        ctx.reply(messages.pleaseWait);
         const fileLink = await ctx.telegram.getFileLink(
           ctx.message.document.file_id
         );
-        const excelFile = require("fs").createWriteStream("./input.xls");
+        // excel filega ishlov berish boshlandi
+        const excelFile = fs.createWriteStream("./input.xls");
         https.get(fileLink.href, (res) => {
-          ctx.reply(messages.pleaseWait);
           res.pipe(excelFile);
           excelFile.on("finish", async (cb) => {
             excelFile.close(cb);
@@ -95,7 +115,9 @@ const sendSMS = new Scenes.WizardScene(
             });
             if (result.input) {
               const shablon = ctx.wizard.state.shablon;
-              result.input.forEach((row, i) => {
+              let umumiyText = ``;
+
+              result.input.forEach(async (row, i) => {
                 if (i !== 0) {
                   let messageText = ``;
                   let text = `+998${row.A} ga \n ${shablon.text}`;
@@ -106,20 +128,44 @@ const sendSMS = new Scenes.WizardScene(
                       rgx,
                       row[Object.keys(row)[j + 1]]
                     );
+                    text = text.replace(rgx, row[Object.keys(row)[j + 1]]);
                   }
-                  ctx.reply(messageText);
+                  umumiyText +=
+                    messageText +
+                    "\n\n---------------------------------------------------\n";
                 }
               });
+              let filename = Date.now() + ".txt";
+              await fs.writeFile(
+                filename,
+                umumiyText,
+                { encoding: "utf-8" },
+                (err) => {
+                  if (err) throw err;
+                }
+              );
+              await ctx.replyWithDocument(
+                {
+                  source: filename,
+                  filename: "review.txt",
+                },
+                Markup.inlineKeyboard([
+                  Markup.button.callback("Tasdiqlash", "confirm"),
+                ])
+              );
+              fs.unlink(filename, (err) => {
+                if (err) console.log(err);
+              });
+              ctx.wizard.next();
             } else {
               ctx.reply(
                 "Excel fileda asosiy input listi mavjud emas. Qo'llanmaga qarang"
               );
             }
-            console.log(result);
           });
         });
       } else {
-        ctx.reply("Bu excel file emas");
+        ctx.reply("Bu excel file emas", keyboards.exitKey);
       }
     } catch (error) {
       console.log(error);
@@ -133,6 +179,7 @@ sendSMS.enter(async (ctx) => {
   shablons.forEach((shablon) => {
     buttons.push(shablon.name);
   });
+  buttons.push(keyboards.exitBtn);
   ctx.reply(
     "Jo'natmoqchi bo'lgan shabloningizni tanlang!",
     Markup.keyboard(buttons).resize()
