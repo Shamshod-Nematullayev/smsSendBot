@@ -14,10 +14,12 @@ const sendSMS = new Scenes.WizardScene(
   async (ctx) => {
     try {
       // ---------------Shablonlardan biri tanlanganida
+      // import tegmasi borilganida
       if (ctx.callbackQuery) {
         const [key, value] = ctx.callbackQuery.data.split("_");
         if (key == "sendsms") {
           const shablon = await Shablon.findById(value);
+          ctx.deleteMessage();
           if (shablon) {
             ctx.wizard.state.shablon = shablon;
             const headers = [{ label: "Telefon", field: "phone" }];
@@ -116,11 +118,17 @@ const sendSMS = new Scenes.WizardScene(
             if (result.input) {
               const shablon = ctx.wizard.state.shablon;
               let umumiyText = ``;
-
+              ctx.wizard.state.phone_numbers = [];
               result.input.forEach(async (row, i) => {
                 if (i !== 0) {
                   let messageText = ``;
+                  if (row.A.toString().length !== 9 || isNaN(row.A)) {
+                    return ctx.reply(
+                      `${i + 2}-qatordagi telefon to'g'ri formatda kiritilmagan`
+                    );
+                  }
                   let text = `+998${row.A} ga \n ${shablon.text}`;
+                  let textForSend = shablon.text;
                   for (let j = 0; j < shablon.variables.length; j++) {
                     const variable = shablon.variables[j];
                     let rgx = new RegExp("(\\[" + variable + "*\\])", "g");
@@ -129,7 +137,16 @@ const sendSMS = new Scenes.WizardScene(
                       row[Object.keys(row)[j + 1]]
                     );
                     text = text.replace(rgx, row[Object.keys(row)[j + 1]]);
+                    textForSend = textForSend.replace(
+                      rgx,
+                      row[Object.keys(row)[j + 1]]
+                    );
                   }
+                  ctx.wizard.state.phone_numbers.push({
+                    phone: `998${row.A}`,
+                    text: shablon.textForSend,
+                    prefix: row.A.toString().slice(0, 2),
+                  });
                   umumiyText +=
                     messageText +
                     "\n\n---------------------------------------------------\n";
@@ -144,7 +161,7 @@ const sendSMS = new Scenes.WizardScene(
                   if (err) throw err;
                 }
               );
-              await ctx.replyWithDocument(
+              const fileSended = await ctx.replyWithDocument(
                 {
                   source: filename,
                   filename: "review.txt",
@@ -153,6 +170,8 @@ const sendSMS = new Scenes.WizardScene(
                   Markup.button.callback("Tasdiqlash", "confirm"),
                 ])
               );
+              ctx.wizard.state.text_file_id = fileSended.document.file_id;
+
               fs.unlink(filename, (err) => {
                 if (err) console.log(err);
               });
@@ -166,6 +185,19 @@ const sendSMS = new Scenes.WizardScene(
         });
       } else {
         ctx.reply("Bu excel file emas", keyboards.exitKey);
+      }
+    } catch (error) {
+      console.log(error);
+      ctx.reply(messages.errorOccured, { parse_mode: "HTML" });
+    }
+  },
+  async (ctx) => {
+    try {
+      if (isExit(ctx)) {
+        return ctx.scene.leave();
+      }
+
+      if (ctx.callbackQuery.data === "confirm") {
       }
     } catch (error) {
       console.log(error);

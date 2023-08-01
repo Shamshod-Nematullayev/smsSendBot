@@ -16,7 +16,7 @@ const schema = new mongoose.Schema({
       sms_password: "",
     },
   },
-  hisob_raqam_summ: {
+  balance: {
     type: Number,
     default: 0,
   },
@@ -25,6 +25,7 @@ const schema = new mongoose.Schema({
     default: 0,
   },
   eskiz: Object,
+  admin: Boolean,
 });
 
 module.exports.User = mongoose.model("user", schema);

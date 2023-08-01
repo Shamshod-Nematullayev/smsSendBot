@@ -42,7 +42,7 @@
   </Style>
  </Styles>
  <Worksheet ss:Name="input">
-  <Table ss:ExpandedColumnCount="3" ss:ExpandedRowCount="6" x:FullColumns="1"
+  <Table ss:ExpandedColumnCount="3" ss:ExpandedRowCount="2" x:FullColumns="1"
    x:FullRows="1" ss:DefaultRowHeight="15">
    <Row>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Telefon</Data></Cell>
@@ -51,28 +51,8 @@
    </Row>
    <Row>
     <Cell><Data ss:Type="String">991872563</Data></Cell>
-    <Cell><Data ss:Type="String">Shamshod Ne'matullayev</Data></Cell>
-    <Cell><Data ss:Type="Number">9000000</Data></Cell>
-   </Row>
-   <Row>
-    <Cell><Data ss:Type="String">991872564</Data></Cell>
-    <Cell><Data ss:Type="String">Mehroj Ochilov</Data></Cell>
-    <Cell><Data ss:Type="Number">450650</Data></Cell>
-   </Row>
-   <Row>
-    <Cell><Data ss:Type="String">991872565</Data></Cell>
-    <Cell><Data ss:Type="String">Zikrillo Shukirllayev</Data></Cell>
-    <Cell><Data ss:Type="Number">120300</Data></Cell>
-   </Row>
-   <Row>
-    <Cell><Data ss:Type="String">991872566</Data></Cell>
-    <Cell><Data ss:Type="String">Azamat Axrorov</Data></Cell>
-    <Cell><Data ss:Type="Number">4565000</Data></Cell>
-   </Row>
-   <Row>
-    <Cell><Data ss:Type="String">991872567</Data></Cell>
-    <Cell><Data ss:Type="String">Dilmurod Qosimov</Data></Cell>
-    <Cell><Data ss:Type="Number">788900</Data></Cell>
+    <Cell><Data ss:Type="String">Janob Shamshod</Data></Cell>
+    <Cell><Data ss:Type="String">150 000</Data></Cell>
    </Row>
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
@@ -80,8 +60,8 @@
    <Panes>
     <Pane>
      <Number>3</Number>
-     <ActiveRow>6</ActiveRow>
-     <ActiveCol>2</ActiveCol>
+     <ActiveRow>1</ActiveRow>
+     <ActiveCol>1</ActiveCol>
     </Pane>
    </Panes>
    <ProtectObjects>False</ProtectObjects>
