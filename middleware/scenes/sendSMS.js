@@ -2,12 +2,14 @@ const { Scenes, Markup } = require("telegraf");
 const { keyboards } = require("../../lib/keyboards");
 const { messages } = require("../../lib/messages");
 const { Shablon } = require("../../model/Shablon");
-const { isExit } = require("./smallFunctions");
+const { isExit, smscount } = require("./smallFunctions");
 const { toExcel } = require("to-excel");
 const excelToJson = require("convert-excel-to-json");
 const https = require("https");
 const { bot } = require("../../core/bot");
 const fs = require("fs");
+const { User } = require("../../model/User");
+const { Eskiz } = require("../../helper/eskiz");
 
 const sendSMS = new Scenes.WizardScene(
   "SENDING_SMS",
@@ -144,7 +146,7 @@ const sendSMS = new Scenes.WizardScene(
                   }
                   ctx.wizard.state.phone_numbers.push({
                     phone: `998${row.A}`,
-                    text: shablon.textForSend,
+                    text: textForSend,
                     prefix: row.A.toString().slice(0, 2),
                   });
                   umumiyText +=
@@ -164,7 +166,7 @@ const sendSMS = new Scenes.WizardScene(
               const fileSended = await ctx.replyWithDocument(
                 {
                   source: filename,
-                  filename: "review.txt",
+                  filename: filename,
                 },
                 Markup.inlineKeyboard([
                   Markup.button.callback("Tasdiqlash", "confirm"),
@@ -198,6 +200,27 @@ const sendSMS = new Scenes.WizardScene(
       }
 
       if (ctx.callbackQuery.data === "confirm") {
+        const user = await User.findOne({ user_id: ctx.from.id });
+
+        const eskiz = new Eskiz(user.eskiz);
+        const ucell = [93, 94, 50];
+        if (user.tarif.type == "BIZNES") {
+          let summ = 0;
+          for (let i = 0; i < ctx.wizard.state.phone_numbers.length; i++) {
+            const acc = ctx.wizard.state.phone_numbers[i];
+            console.log(acc);
+            if (smscount(acc.text) == 10) {
+              return ctx.reply(`${i + 1} qatordagi xabar matni juda katta`);
+            }
+            if (ucell.includes(parseInt(acc.prefix))) {
+              summ += 115;
+            } else {
+              summ += 50;
+            }
+            const balance = await eskiz.getBalance();
+            console.log(balance);
+          }
+        }
       }
     } catch (error) {
       console.log(error);
